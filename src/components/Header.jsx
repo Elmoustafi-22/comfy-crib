@@ -16,7 +16,7 @@ function Header() {
         {/* Search Bar  */}
         <form className="w-60 lg:w-120 px-2 py-2 border border-cyan-400 bg-white rounded-4xl items-center relative">
           <input
-            className=" bg-transparent w-full focus:ring-0 focus:outline-0 relative"
+            className="font-lato text-slate-600 bg-transparent w-full focus:ring-0 focus:outline-0 relative"
             type="text"
             placeholder="Find your perfect home..."
           />
