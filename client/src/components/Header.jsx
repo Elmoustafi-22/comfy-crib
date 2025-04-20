@@ -3,13 +3,13 @@ import { Link } from "react-router-dom";
 
 function Header() {
   return (
-    <header className="bg-cyan-100 border-b-2 border-b-cyan-200/50 shadow-md">
+    <header className="bg-gradient-to-r from-cyan-700 via-cyan-600 to-cyan-500 border-b-2 border-b-cyan-200/50 shadow-md">
       <div className="flex justify-between items-center max-w-7xl mx-auto p-3">
         {/* Logo  */}
         <Link to="/">
           <h1 className="font-lato font-extrabold text-sm sm:text-xl flex flex-wrap">
             <span className="text-cyan-400">Comfy</span>
-            <span className="text-cyan-800">Crib</span>
+            <span className="text-cyan-950">Crib</span>
           </h1>
         </Link>
 
