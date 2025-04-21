@@ -1,7 +1,45 @@
 import { Link } from "react-router-dom";
-import { FaGoogle } from 'react-icons/fa'
+import { FaGoogle } from "react-icons/fa";
+import { useState } from "react";
 
 function SignUp() {
+  const [formData, setFormData] = useState({});
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      const res = await fetch("/api/auth/sign-up", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (data.success === false) {
+        setLoading(false);
+        setError(data.message);
+        return;
+      }
+      setLoading(false);
+    } catch (error) {
+      setLoading(false)
+      setError(error.message)
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-r from-cyan-100 to-cyan-50">
       <div className="flex flex-col items-center bg-gradient-to-r from-cyan-700 to-cyan-500  p-8 rounded-lg shadow-xl w-full max-w-md">
@@ -12,7 +50,7 @@ function SignUp() {
           Welcome to ComfyCrib - Let's create your account
         </h3>
         <hr className="border-t border-gray-300 w-full mb-6" />
-        <form className="w-full space-y-2">
+        <form onSubmit={handleSubmit} className="w-full space-y-2">
           <div>
             <label
               htmlFor="userName"
@@ -22,9 +60,10 @@ function SignUp() {
             </label>
             <input
               type="text"
-              id="userName"
+              id="username"
               className="bg-white font-lato w-full text-gray-500 px-4 py-2 rounded border-1 border-gray-300 focus:outline-cyan-400"
               placeholder="Username"
+              onChange={handleChange}
             />
           </div>
           <div>
@@ -39,6 +78,7 @@ function SignUp() {
               id="email"
               className="bg-white font-lato w-full text-gray-500 px-4 py-2 rounded border-1 border-gray-300 focus:outline-cyan-400"
               placeholder="Email"
+              onChange={handleChange}
             />
           </div>
           <div>
@@ -53,13 +93,15 @@ function SignUp() {
               id="password"
               className="bg-white font-lato w-full text-gray-500 px-4 py-2 rounded border-1 border-gray-300 focus:outline-cyan-400"
               placeholder="Password"
+              onChange={handleChange}
             />
           </div>
           <button
-            className="w-full bg-cyan-950 hover:opacity-95 disabled:opacity-80 cursor-pointer py-2 px-4 rounded transition duration-300 text-xl text-white mt-1"
+            disabled={loading}
+            className="uppercase w-full bg-cyan-950 hover:opacity-95 disabled:opacity-80 cursor-pointer py-2 px-4 rounded transition duration-300 text-xl text-white mt-1"
             type="submit"
           >
-            Sign up
+            {loading ? "Loading..." : "Sign Up"}
           </button>
           <p className="font-lato text-center text-gray-100">
             Already have an account? &nbsp;
@@ -78,9 +120,10 @@ function SignUp() {
             oogle
           </button>
         </form>
+      {error && <p className="text-red-600 mt-5 font-lato text-center text-lg italic">{error}</p>}
       </div>
     </div>
   );
 }
 
-export default SignUp
+export default SignUp;
