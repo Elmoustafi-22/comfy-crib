@@ -1,21 +1,60 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FaGoogle } from "react-icons/fa";
 import { useState } from "react";
+import { useSnackbar } from 'notistack'
 
 function SignUp() {
-  const [formData, setFormData] = useState({});
-  const [error, setError] = useState(null);
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: ''
+  });
+  const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false);
+  const { enqueueSnackbar } = useSnackbar()
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.id]: e.target.value,
     });
+    // Clear error when user starts typing
+    if (errors[e.target.id]){
+      setErrors({
+        ...errors,
+        [e.target.id]: ''
+      })
+    }
   };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.username || formData.username.trim() === '') {
+      newErrors.username = 'Username is required';
+    }
+
+    if (!formData.email || formData.email.trim() === '') {
+      newErrors.email = 'Email is required'; 
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Email is invalid";
+    }
+
+    if (!formData.password){
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters'
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
     try {
       setLoading(true);
       const res = await fetch("/api/auth/sign-up", {
@@ -28,20 +67,22 @@ function SignUp() {
 
       const data = await res.json();
 
-      if (data.success === false) {
+      if (!res.ok || data.success === false) {
         setLoading(false);
-        setError(data.message);
+        enqueueSnackbar(`${data.message}` || 'Registration failed', {variant: 'error'})
         return;
       }
       setLoading(false);
+      navigate('/')
+      enqueueSnackbar('Signed in successfully', { variant: 'success' })
     } catch (error) {
       setLoading(false)
-      setError(error.message)
+      enqueueSnackbar(`${error.message}` || 'Something went wrong', { variant: 'error' })
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-r from-cyan-100 to-cyan-50">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-cyan-100 to-cyan-50">
       <div className="flex flex-col items-center bg-gradient-to-r from-cyan-700 to-cyan-500  p-8 rounded-lg shadow-xl w-full max-w-md">
         <h1 className="font-lato font-bold text-3xl text-cyan-950 mb-2">
           Sign up
@@ -54,58 +95,74 @@ function SignUp() {
           <div>
             <label
               htmlFor="userName"
-              className=" font-lato text-gray-100 text-sm mb-1"
+              className=" font-lato text-gray-100 text-sm mb-1 block"
             >
               Username
             </label>
             <input
               type="text"
               id="username"
-              className="bg-white font-lato w-full text-gray-500 px-4 py-2 rounded border-1 border-gray-300 focus:outline-cyan-400"
+              className="bg-white font-lato w-full text-gray-500 px-4 py-2 rounded border-1 border-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-400"
               placeholder="Username"
+              value={formData.username}
               onChange={handleChange}
+              aria-invalid={errors.username ? "true": "false"}
             />
+            {errors.username && (
+              <span className="text-red-300 text-xs mt-1">{errors.username}</span>
+            )}
           </div>
           <div>
             <label
               htmlFor="email"
-              className="font-lato text-gray-100 text-sm mb-1"
+              className="font-lato text-gray-100 text-sm mb-1 block"
             >
               Email
             </label>
             <input
               type="text"
               id="email"
-              className="bg-white font-lato w-full text-gray-500 px-4 py-2 rounded border-1 border-gray-300 focus:outline-cyan-400"
+              className="bg-white font-lato w-full text-gray-500 px-4 py-2 rounded border-1 border-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-400"
               placeholder="Email"
+              value={formData.email}
               onChange={handleChange}
+              aria-invalid={errors.email ? "true": "false"}
             />
+            {errors.email && (
+              <span className="text-red-300 text-xs mt-1">{errors.email}</span>
+            )}
           </div>
           <div>
             <label
               htmlFor="password"
-              className=" font-lato text-gray-100 text-sm mb-1"
+              className=" font-lato text-gray-100 text-sm mb-1 block"
             >
               Password
             </label>
             <input
               type="password"
               id="password"
-              className="bg-white font-lato w-full text-gray-500 px-4 py-2 rounded border-1 border-gray-300 focus:outline-cyan-400"
-              placeholder="Password"
+              className="bg-white font-lato w-full text-gray-500 px-4 py-2 rounded border-1 border-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              placeholder="Password (min 6 characters)"
+              value={formData.password}
               onChange={handleChange}
+              aria-invalid={errors.password ? "true" : "false"}
             />
+            {errors.password && (
+              <span className="text-red-300 text-xs mt-1">{errors.password}</span>
+            )}
           </div>
           <button
             disabled={loading}
-            className="uppercase w-full bg-cyan-950 hover:opacity-95 disabled:opacity-80 cursor-pointer py-2 px-4 rounded transition duration-300 text-xl text-white mt-1"
+            className="uppercase w-full bg-cyan-950 hover:opacity-95 disabled:opacity-80 cursor-pointer py-2 px-4 rounded transition duration-300 text-xl text-white mt-4"
             type="submit"
+            aria-busy= {loading}
           >
             {loading ? "Loading..." : "Sign Up"}
           </button>
-          <p className="font-lato text-center text-gray-100">
+          <p className="font-lato text-center text-gray-100 mt-2">
             Already have an account? &nbsp;
-            <Link to="/sign-in" className="text-cyan-950 font-bold">
+            <Link to="/sign-in" className="text-cyan-950 font-bold hover:underline">
               Log In
             </Link>
           </p>
@@ -113,14 +170,13 @@ function SignUp() {
             or
           </div>
           <button
-            className="flex items-center hover:opacity-95 justify-center text-center w-full bg-red-500 text-white cursor-pointer py-2 px-4 rounded transition duration-300 text-x"
+            className="flex items-center hover:opacity-95 justify-center text-center w-full bg-red-500 text-white cursor-pointer py-2 px-4 rounded transition duration-300"
             type="submit"
           >
             Continue with &nbsp; <FaGoogle />
             oogle
           </button>
         </form>
-      {error && <p className="text-red-600 mt-5 font-lato text-center text-lg italic">{error}</p>}
       </div>
     </div>
   );
