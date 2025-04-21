@@ -74,7 +74,7 @@ function SignUp() {
       }
       setLoading(false);
       navigate('/sign-in')
-      enqueueSnackbar('Signed in successfully', { variant: 'success' })
+      enqueueSnackbar('Signed up successfully', { variant: 'success' })
     } catch (error) {
       setLoading(false)
       enqueueSnackbar(`${error.message}` || 'Something went wrong', { variant: 'error' })
