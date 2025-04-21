@@ -73,7 +73,7 @@ function SignUp() {
         return;
       }
       setLoading(false);
-      navigate('/')
+      navigate('/sign-in')
       enqueueSnackbar('Signed in successfully', { variant: 'success' })
     } catch (error) {
       setLoading(false)
