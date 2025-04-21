@@ -1,7 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
-import { FaGoogle } from "react-icons/fa";
 import { useState } from "react";
 import { useSnackbar } from "notistack";
+import { useDispatch, useSelector } from 'react-redux'
+import { signInStart, signInSuccess, signInFailure } from '../redux/userSlice';
 
 function SignIn() {
   const [formData, setFormData] = useState({
@@ -9,9 +10,11 @@ function SignIn() {
     password: "",
   });
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
+  const { loading } = useSelector((state) => state.user)
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
+  const dispatch = useDispatch()
 
   const handleChange = (e) => {
     setFormData({
@@ -51,7 +54,7 @@ function SignIn() {
 
     if (!validateForm()) return;
     try {
-      setLoading(true);
+      dispatch(signInStart())
       const res = await fetch("/api/auth/sign-in", {
         method: "POST",
         headers: {
@@ -63,17 +66,17 @@ function SignIn() {
       const data = await res.json();
 
       if (!res.ok || data.success === false) {
-        setLoading(false);
+        dispatch(signInFailure(data.message))
         enqueueSnackbar(`${data.message}` || "Registration failed", {
           variant: "error",
         });
         return;
       }
-      setLoading(false);
+      dispatch(signInSuccess(data))
       navigate("/");
       enqueueSnackbar("Signed in successfully", { variant: "success" });
     } catch (error) {
-      setLoading(false);
+      dispatch(signInFailure(error.message))
       enqueueSnackbar(`${error.message}` || "Something went wrong", {
         variant: "error",
       });
