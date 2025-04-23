@@ -1,8 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useSnackbar } from "notistack";
-import { useDispatch, useSelector } from 'react-redux'
-import { signInStart, signInSuccess, signInFailure } from '../redux/userSlice';
+import { useDispatch, useSelector } from "react-redux";
+import { signInStart, signInSuccess, signInFailure } from "../redux/userSlice";
+import OAuth from "../components/OAuth";
 
 function SignIn() {
   const [formData, setFormData] = useState({
@@ -11,10 +12,10 @@ function SignIn() {
   });
   const [errors, setErrors] = useState({});
   // const [loading, setLoading] = useState(false);
-  const { loading } = useSelector((state) => state.user)
+  const { loading } = useSelector((state) => state.user);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
 
   const handleChange = (e) => {
     setFormData({
@@ -54,7 +55,7 @@ function SignIn() {
 
     if (!validateForm()) return;
     try {
-      dispatch(signInStart())
+      dispatch(signInStart());
       const res = await fetch("/api/auth/sign-in", {
         method: "POST",
         headers: {
@@ -66,17 +67,17 @@ function SignIn() {
       const data = await res.json();
 
       if (!res.ok || data.success === false) {
-        dispatch(signInFailure(data.message))
+        dispatch(signInFailure(data.message));
         enqueueSnackbar(`${data.message}` || "Registration failed", {
           variant: "error",
         });
         return;
       }
-      dispatch(signInSuccess(data))
+      dispatch(signInSuccess(data));
       navigate("/");
       enqueueSnackbar("Signed in successfully", { variant: "success" });
     } catch (error) {
-      dispatch(signInFailure(error.message))
+      dispatch(signInFailure(error.message));
       enqueueSnackbar(`${error.message}` || "Something went wrong", {
         variant: "error",
       });
@@ -144,6 +145,7 @@ function SignIn() {
           >
             {loading ? "Loading..." : "Sign In"}
           </button>
+          
           <p className="font-lato text-center text-gray-100 mt-2">
             Don&#39;t have an account? &nbsp;
             <Link
@@ -153,7 +155,10 @@ function SignIn() {
               Sign Up
             </Link>
           </p>
-          
+          <div className="py-2 flex items-center text-lg text-gray-100 before:flex-1 before:border-t before:border-gray-200 before:me-6 after:flex-1 after:border-t after:border-gray-200 after:ms-6 dark:text-white dark:before:border-neutral-600 dark:after:border-neutral-600">
+            or
+          </div>
+          <OAuth />
         </form>
       </div>
     </div>

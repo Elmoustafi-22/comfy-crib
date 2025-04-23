@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
-import { FaGoogle } from "react-icons/fa";
 import { useState } from "react";
 import { useSnackbar } from 'notistack'
+import OAuth from "../components/OAuth";
 
 function SignUp() {
   const [formData, setFormData] = useState({
@@ -160,6 +160,7 @@ function SignUp() {
           >
             {loading ? "Loading..." : "Sign Up"}
           </button>
+          
           <p className="font-lato text-center text-gray-100 mt-2">
             Already have an account? &nbsp;
             <Link to="/sign-in" className="text-cyan-950 font-bold hover:underline">
@@ -169,13 +170,7 @@ function SignUp() {
           <div className="py-2 flex items-center text-lg text-gray-100 before:flex-1 before:border-t before:border-gray-200 before:me-6 after:flex-1 after:border-t after:border-gray-200 after:ms-6 dark:text-white dark:before:border-neutral-600 dark:after:border-neutral-600">
             or
           </div>
-          <button
-            className="flex items-center hover:opacity-95 justify-center text-center w-full bg-red-500 text-white cursor-pointer py-2 px-4 rounded transition duration-300"
-            type="submit"
-          >
-            Continue with &nbsp; <FaGoogle />
-            oogle
-          </button>
+          <OAuth />
         </form>
       </div>
     </div>
