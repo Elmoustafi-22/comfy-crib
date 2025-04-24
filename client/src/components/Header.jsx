@@ -4,7 +4,6 @@ import { useSelector } from "react-redux";
 
 function Header() {
   const { currentUser } = useSelector((state) => state.user);
-  console.log(currentUser)
   return (
     <header className="bg-gradient-to-r from-cyan-700 via-cyan-600 to-cyan-500 border-b-2 border-b-cyan-200/50 shadow-md">
       <div className="flex justify-between items-center max-w-7xl mx-auto p-3">
@@ -40,7 +39,7 @@ function Header() {
               <span className="absolute bottom-0 right-0 w-0 h-0.5 bg-cyan-400 transition-all group-hover:w-full group-hover:right-auto group-hover:left-0 duration-300"></span>
             </li>
           </Link>
-          <Link to="/sign-in">
+          <Link to="/profile">
             {currentUser ? 
               <img
                 src={currentUser.avatar}
