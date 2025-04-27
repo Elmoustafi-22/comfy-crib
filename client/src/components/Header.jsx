@@ -39,12 +39,13 @@ function Header() {
               <span className="absolute bottom-0 right-0 w-0 h-0.5 bg-cyan-400 transition-all group-hover:w-full group-hover:right-auto group-hover:left-0 duration-300"></span>
             </li>
           </Link>
-          <Link to="/profile">
+          
+          <Link to="/profile" className="bg-slate-50 border-2 border-cyan-400 rounded-full">
             {currentUser ? 
               <img
                 src={currentUser.avatar}
                 alt="avatar"
-                className="w-8 h-8 rounded-full object-cover"
+                className="w-10 h-10 rounded-full object-cover border-2 border-cyan-400"
               />
              : (
               <li className="text-slate-700 py-1 px-1 relative group">

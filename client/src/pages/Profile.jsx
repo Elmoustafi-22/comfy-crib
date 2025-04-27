@@ -1,21 +1,89 @@
 import { useSelector, useDispatch } from "react-redux";
 import { useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { updateUserSuccess } from '../redux/userSlice'
+import { updateUserSuccess } from "../redux/userSlice";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey)
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default function Profile() {
   const fileRef = useRef(null);
   const { currentUser } = useSelector((state) => state.user);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
-  const [avatarUrl, setAvatarUrl] = useState(currentUser.avatar)
-  const dispatch = useDispatch()
+  const [avatarUrl, setAvatarUrl] = useState(currentUser.avatar);
+  const dispatch = useDispatch();
 
   
+
+  const handleFileChange = async (e) => {
+    try {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (!file.type.includes("image")) {
+        setUploadError("please select an image");
+        return;
+      }
+
+      setUploading(true);
+      setUploadError(null);
+
+      const fileName = `avatar-${currentUser._id}-${Date.now()}.${file.name
+        .split(".")
+        .pop()}`;
+
+      const { data, error } = await supabase.storage
+        .from("comfy-crib-avatars")
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("comfy-crib-avatars")
+        .getPublicUrl(fileName);
+
+      const avatarUrl = publicUrlData.publicUrl;
+
+      const response = await fetch(
+        `/api/user/upload-avatar/${currentUser._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ avatarUrl }),
+        }
+      );
+
+      const data2 = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data2.message || "Failed to update avatar");
+      }
+
+      setAvatarUrl(avatarUrl);
+
+      const img = new Image();
+      img.src = avatarUrl;
+      img.onload = () => {
+        setUploading(false)
+      }
+
+      dispatch(updateUserSuccess({ ...currentUser, avatar: avatarUrl, updatedAt: new Date().toISOString() }));
+    } catch (error) {
+      setUploadError(error.message);
+      console.error("Error uploading avatar:", error);
+      setUploading(false);
+    }
+  };
+
   const date = new Date(currentUser.updatedAt);
   const formattedDate = date.toLocaleString("en-US", {
     year: "numeric",
@@ -27,64 +95,6 @@ export default function Profile() {
     timeZoneName: "short",
   });
 
-
-  const handleFileChange = async (e) => {
-    try {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      if (!file.type.includes('image')){
-        setUploadError('please select an image')
-        return;
-      }
-
-      setUploading(true)
-      setUploadError(null);
-
-      const fileName = `avatar-${currentUser._id}-${Date.now()}.${file.name.split('.').pop()}`;
-      
-      const { data, error } = await supabase.storage
-        .from('comfy-crib-avatars')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        })
-
-        if (error) {
-          throw new Error(error.message)
-        }
-
-        const { data: publicUrlData } = supabase.storage
-          .from('comfy-crib-avatars')
-          .getPublicUrl(fileName);
-
-        const avatarUrl = publicUrlData.publicUrl;
-
-        const response = await fetch(`/api/user/upload-avatar/${currentUser._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ avatarUrl })
-        })
-
-        const data2 = await response.json()
-
-        if (!response.ok) {
-          throw new Error(data2.message || 'Failed to update avatar');
-        }
-
-        setAvatarUrl(avatarUrl);
-        dispatch(updateUserSuccess({...currentUser, avatar: avatarUrl}))
-
-    } catch (error) {
-      setUploadError(error.message)
-      console.error('Error uploading avatar:', error)
-    } finally {
-      setUploading(false)
-    }
-  }
-  
   return (
     <div className="font-lato bg-gradient-to-r from-cyan-100 to-cyan-50 min-h-screen py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
@@ -115,21 +125,48 @@ export default function Profile() {
                       accept="image/*"
                       onChange={handleFileChange}
                     />
-                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100">
-                      <img
-                        src={avatarUrl}
-                        alt="Profile picture"
-                        className="w-full h-full object-cover cursor-pointer mt-2"
-                        onClick={() => fileRef.current.click()}
-                      />
-                    </div>
+                    <img
+                      src={avatarUrl}
+                      alt="Profile picture"
+                      className="w-16 h-16 object-cover cursor-pointer mt-2 border-3 border-cyan-400 rounded-full"
+                      onClick={() => fileRef.current.click()}
+                    />
+
                     <button
                       type="button"
                       onClick={() => fileRef.current.click()}
-                      className="font-semibold text-cyan-700 text-sm cursor-pointer disabled:text-gray-300"
+                      className={`font-semibold text-cyan-700 text-sm cursor-pointer disabled:text-gray-300 flex items-center gap-2 ${
+                        uploading ? "opacity-50" : "opacity-100"
+                      }`}
                       disabled={uploading}
                     >
-                      {uploading ? "Uploading..." : "Change"}
+                      {uploading ? (
+                        <>
+                          <svg
+                            className="animate-spin h-4 w-4 text-cyan-600"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                            ></path>
+                          </svg>
+                          Uploading...
+                        </>
+                      ) : (
+                        "Change"
+                      )}
                     </button>
                   </div>
                   {uploadError && (
