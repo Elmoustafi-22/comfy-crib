@@ -1,9 +1,9 @@
 import express from "express";
-import { test } from "../controllers/user.controller.js";
+import { uploadAvatar } from "../controllers/user.controller.js";
 
 const router = express.Router()
 
- router.get('/test', test)
+ router.put("/upload-avatar/:id", uploadAvatar);
 
 
  export default router

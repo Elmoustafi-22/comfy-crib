@@ -1,8 +1,21 @@
-import React from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { useRef, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+import { updateUserSuccess } from '../redux/userSlice'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey)
 
 export default function Profile() {
+  const fileRef = useRef(null);
   const { currentUser } = useSelector((state) => state.user);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState(currentUser.avatar)
+  const dispatch = useDispatch()
+
+  
   const date = new Date(currentUser.updatedAt);
   const formattedDate = date.toLocaleString("en-US", {
     year: "numeric",
@@ -14,11 +27,71 @@ export default function Profile() {
     timeZoneName: "short",
   });
 
+
+  const handleFileChange = async (e) => {
+    try {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (!file.type.includes('image')){
+        setUploadError('please select an image')
+        return;
+      }
+
+      setUploading(true)
+      setUploadError(null);
+
+      const fileName = `avatar-${currentUser._id}-${Date.now()}.${file.name.split('.').pop()}`;
+      
+      const { data, error } = await supabase.storage
+        .from('comfy-crib-avatars')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+        if (error) {
+          throw new Error(error.message)
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('comfy-crib-avatars')
+          .getPublicUrl(fileName);
+
+        const avatarUrl = publicUrlData.publicUrl;
+
+        const response = await fetch(`/api/user/upload-avatar/${currentUser._id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ avatarUrl })
+        })
+
+        const data2 = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data2.message || 'Failed to update avatar');
+        }
+
+        setAvatarUrl(avatarUrl);
+        dispatch(updateUserSuccess({...currentUser, avatar: avatarUrl}))
+
+    } catch (error) {
+      setUploadError(error.message)
+      console.error('Error uploading avatar:', error)
+    } finally {
+      setUploading(false)
+    }
+  }
+  
   return (
     <div className="font-lato bg-gradient-to-r from-cyan-100 to-cyan-50 min-h-screen py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-xl font-semibold text-cyan-950">Account and Settings</h1>
+          <h1 className="text-xl font-semibold text-cyan-950">
+            Account and Settings
+          </h1>
           <p className="text-sm text-gray-500">Last updated: {formattedDate}</p>
         </div>
 
@@ -35,17 +108,34 @@ export default function Profile() {
               <div className="mr-4">
                 <div className="flex flex-col">
                   <div className="flex flex-row justify-between mb-4">
+                    <input
+                      type="file"
+                      ref={fileRef}
+                      hidden
+                      accept="image/*"
+                      onChange={handleFileChange}
+                    />
                     <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100">
                       <img
-                        src={currentUser.avatar}
+                        src={avatarUrl}
                         alt="Profile picture"
                         className="w-full h-full object-cover cursor-pointer mt-2"
+                        onClick={() => fileRef.current.click()}
                       />
                     </div>
-                    <button className="font-semibold text-cyan-700 text-sm cursor-pointer">
-                      Change
+                    <button
+                      type="button"
+                      onClick={() => fileRef.current.click()}
+                      className="font-semibold text-cyan-700 text-sm cursor-pointer disabled:text-gray-300"
+                      disabled={uploading}
+                    >
+                      {uploading ? "Uploading..." : "Change"}
                     </button>
                   </div>
+                  {uploadError && (
+                    <p className="text-red-500 text-sm mb-2">{uploadError}</p>
+                  )}
+
                   {/* Username */}
                   <div className="mb-6">
                     <label
@@ -58,7 +148,7 @@ export default function Profile() {
                       type="text"
                       id="username"
                       className="p-2 shadow-sm text-gray-600 focus:outline-none focus:ring-cyan-600 focus:ring-2 block w-full sm:text-sm rounded"
-                      placeholder="Username"                
+                      placeholder="Username"
                     />
                   </div>
 
