@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useSnackbar } from "notistack";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { signInStart, signInSuccess, signInFailure } from "../redux/userSlice";
 import OAuth from "../components/OAuth";
 
@@ -11,8 +11,7 @@ function SignIn() {
     password: "",
   });
   const [errors, setErrors] = useState({});
-  // const [loading, setLoading] = useState(false);
-  const { loading } = useSelector((state) => state.user);
+  const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -55,6 +54,7 @@ function SignIn() {
 
     if (!validateForm()) return;
     try {
+      setLoading(true)
       dispatch(signInStart());
       const res = await fetch("/api/auth/sign-in", {
         method: "POST",
@@ -62,23 +62,25 @@ function SignIn() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
+        credentials: 'include'
       });
 
       const data = await res.json();
-
-      if (!res.ok || data.success === false) {
-        dispatch(signInFailure(data.message));
-        enqueueSnackbar(`${data.message}` || "Registration failed", {
+      setLoading(false)
+      if (!res.ok || data.success === false ) {
+        dispatch(signInFailure(data.message || "Invalid user data"));
+        enqueueSnackbar(`${data.message}` || "Sign-in failed", {
           variant: "error",
         });
         return;
       }
+      console.log(data)
       dispatch(signInSuccess(data));
       navigate("/");
       enqueueSnackbar("Signed in successfully", { variant: "success" });
     } catch (error) {
       dispatch(signInFailure(error.message));
-      enqueueSnackbar(`${error.message}` || "Something went wrong", {
+      enqueueSnackbar(error.message || "Something went wrong", {
         variant: "error",
       });
     }

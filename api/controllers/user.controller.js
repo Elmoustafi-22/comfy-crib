@@ -12,6 +12,9 @@ const supabase = createClient(
 
 export const uploadAvatar = async (req, res, next) => {
   const { id } = req.params;
+  if (String(req.user.id) !== String(id)){
+    return next(errorHandler(401, "You can only update your own account"));
+  }
   const { avatarUrl } = req.body;
 
   try {

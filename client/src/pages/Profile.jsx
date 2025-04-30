@@ -1,11 +1,14 @@
 import { useSelector, useDispatch } from "react-redux";
 import { useRef, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-import { updateUserSuccess } from "../redux/userSlice";
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabase } from "../supabaseClient";
+import { useNavigate } from 'react-router-dom'
+import { useSnackbar } from "notistack";
+import {
+  updateUserStart,
+  updateUserSuccess,
+  updateUserFailure,
+  signOut
+} from "../redux/userSlice";
 
 export default function Profile() {
   const fileRef = useRef(null);
@@ -13,12 +16,17 @@ export default function Profile() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState(currentUser.avatar);
+  const [formData, setFormData] = useState({});
+  const [loading, setLoading] = useState(false)
   const dispatch = useDispatch();
+  const navigate = useNavigate()
+  const { enqueueSnackbar } = useSnackbar()
 
-  
+  console.log(currentUser)
 
   const handleFileChange = async (e) => {
     try {
+      dispatch(updateUserStart())
       const file = e.target.files[0];
       if (!file) return;
 
@@ -59,6 +67,7 @@ export default function Profile() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ avatarUrl }),
+          credentials: "include"
         }
       );
 
@@ -73,10 +82,16 @@ export default function Profile() {
       const img = new Image();
       img.src = avatarUrl;
       img.onload = () => {
-        setUploading(false)
-      }
+        setUploading(false);
+      };
 
-      dispatch(updateUserSuccess({ ...currentUser, avatar: avatarUrl, updatedAt: new Date().toISOString() }));
+      dispatch(
+        updateUserSuccess({
+          ...currentUser,
+          avatar: avatarUrl,
+          updatedAt: new Date().toISOString(),
+        })
+      );
     } catch (error) {
       setUploadError(error.message);
       console.error("Error uploading avatar:", error);
@@ -95,6 +110,68 @@ export default function Profile() {
     timeZoneName: "short",
   });
 
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      avatar: avatarUrl,
+      [e.target.id]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      setLoading(true)
+      dispatch(updateUserStart());
+      const res = await fetch(`/api/user/update/${currentUser._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+        credentials: 'include',
+      });
+
+      const data = await res.json();
+      
+      if (data.success === false) {
+        dispatch(updateUserFailure(data.message));
+        return;
+      }
+      setLoading(false)
+      console.log(data)
+      dispatch(updateUserSuccess(data));
+      enqueueSnackbar('Update successfully!', { variant:'success' })
+
+    } catch (error) {
+      setLoading(false)
+      dispatch(updateUserFailure(error.message));
+    }
+  };
+
+  const handleSignOut = async () => {
+    dispatch(signOut())
+  }
+  if (!currentUser && !currentUser._id) {
+    dispatch(signOut())
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center p-4">
+          <h2 className="text-lg font-semibold text-red-600">
+            Authentication Error
+          </h2>
+          <p className="mt-2">Please log in again to continue.</p>
+          <button
+            onClick={() => navigate("/sign-in")}
+            className="mt-4 px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="font-lato bg-gradient-to-r from-cyan-100 to-cyan-50 min-h-screen py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
@@ -107,7 +184,7 @@ export default function Profile() {
 
         {/* Basic Details */}
 
-        <form>
+        <form onSubmit={handleSubmit}>
           <div className="bg-white shadow-lg rounded-lg mb-6 p-6">
             <h2 className="text-lg font-medium text-gray-900 mb-6">
               Basic Details
@@ -185,7 +262,9 @@ export default function Profile() {
                       type="text"
                       id="username"
                       className="p-2 shadow-sm text-gray-600 focus:outline-none focus:ring-cyan-600 focus:ring-2 block w-full sm:text-sm rounded"
+                      defaultValue={currentUser.username}
                       placeholder="Username"
+                      onChange={handleChange}
                     />
                   </div>
 
@@ -201,7 +280,9 @@ export default function Profile() {
                       type="email"
                       id="email"
                       className="p-2 shadow-sm text-gray-600 focus:outline-none focus:ring-cyan-600 focus:ring-2 block w-full sm:text-sm rounded"
+                      defaultValue={currentUser.email}
                       placeholder="Email"
+                      onChange={handleChange}
                     />
                   </div>
                   {/* Password */}
@@ -217,6 +298,7 @@ export default function Profile() {
                       id="password"
                       className="p-2 shadow-sm text-gray-600 focus:outline-none focus:ring-cyan-600 focus:ring-2 block w-full sm:text-sm rounded"
                       placeholder="Password"
+                      onChange={handleChange}
                     />
                   </div>
                 </div>
@@ -224,8 +306,11 @@ export default function Profile() {
             </div>
             {/* buttons */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <button className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer transition">
-                UPDATE
+              <button
+                type="submit"
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer transition"
+              >
+                {loading ? 'LOADING': 'UPDATE'}
               </button>
               <button className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer transition">
                 CREATE LISTING
@@ -244,7 +329,10 @@ export default function Profile() {
               <button className="cursor-pointer text-green-600 text-sm font-medium">
                 Show listings
               </button>
-              <button className="cursor-pointer text-red-600 text-sm font-medium">
+              <button
+                className="cursor-pointer text-red-600 text-sm font-medium"
+                onClick={handleSignOut}
+              >
                 Sign out
               </button>
             </div>

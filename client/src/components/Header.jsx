@@ -40,13 +40,13 @@ function Header() {
             </li>
           </Link>
           
-          <Link to="/profile" className="bg-slate-50 border-2 border-cyan-400 rounded-full">
+          <Link to="/profile">
             {currentUser ? 
-              <img
+              (<img
                 src={currentUser.avatar}
                 alt="avatar"
-                className="w-10 h-10 rounded-full object-cover border-2 border-cyan-400"
-              />
+                className="w-10 h-10 rounded-full object-cover border-3 border-cyan-400"
+              />)
              : (
               <li className="text-slate-700 py-1 px-1 relative group">
                 Sign in

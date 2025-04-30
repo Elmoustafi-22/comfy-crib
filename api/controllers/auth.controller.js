@@ -38,7 +38,7 @@ export const signin = async (req, res, next) => {
     res
       .cookie("access_token", token, {
         httpOnly: true,
-        expires: new Date(Date.now() + 60 * 60 * 1000),
+        maxAge: 60 * 60 * 1000,
       })
       .status(200)
       .json(rest);
@@ -58,7 +58,7 @@ export const google = async (req, res, next) => {
       res
         .cookie("access_token", token, {
             httpOnly: true,
-            expires: new Date(Date.now() + 60 + 60 * 1000),
+             maxAge: 60 * 60 * 1000,
         })
         .status(200)
         .json(rest)
@@ -78,7 +78,7 @@ export const google = async (req, res, next) => {
         const { password: pass, ...rest } = newUser._doc;
         res.cookie("access_token", token, {
           httpOnly: true,
-          expires: new Date(Date.now() + 60 + 60 * 1000),
+          expires: new Date(Date.now() + 60 * 60 * 1000),
         })
         .status(200)
         .json(rest)

@@ -1,19 +1,21 @@
 import { FaGoogle } from "react-icons/fa";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
 import { app } from "../firebase";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { useNavigate } from 'react-router-dom'
 import { useSnackbar } from 'notistack';
 import { signInStart, signInSuccess } from "../redux/userSlice";
+import { useState } from "react";
 
 export default function OAuth() {
     const { enqueueSnackbar } = useSnackbar();
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading } = useSelector((state) => state.user)
+    const [loading, setLoading] = useState(false)
 
     const handleGoogleClick = async () => {
         try {
+            setLoading(true)
             dispatch(signInStart())
             const provider = new GoogleAuthProvider();
             const auth = getAuth(app)
@@ -32,12 +34,15 @@ export default function OAuth() {
                 })
             })
             const data = await res.json()
+            setLoading(false)
             console.log(data)
             dispatch(signInSuccess(data))
             navigate('/')
             enqueueSnackbar('Signed in with google', { variant: 'success' })
         } catch (error) {
+            setLoading(false)
             console.log("could not sign in with google", error)
+            enqueueSnackbar('Google sign-in failed', { variant: 'error' })
         }
     }
 
