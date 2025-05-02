@@ -29,8 +29,7 @@ export default function Profile() {
  
 
   
-  if (!currentUser && !currentUser._id) {
-    dispatch(signOut())
+  if (!currentUser || !currentUser._id) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center p-4">

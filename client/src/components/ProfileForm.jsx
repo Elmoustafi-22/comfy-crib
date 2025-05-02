@@ -10,6 +10,8 @@ import {
   signOut,
   deleteUserSuccess,
   deleteUserFailure,
+  signOutFailure,
+  signOutSuccess,
 } from "../redux/userSlice";
 import { fetchWithAuth } from "../../../api/utils/fetchWithAuth";
 import DeleteModal from "./DeleteModal";
@@ -28,7 +30,23 @@ export default function ProfileForm() {
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    dispatch(signOut());
+    try {
+      const res = await fetch("/api/auth/sign-out", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      console.log(data)
+      if (data.success === false) {
+        dispatch(signOutFailure(data.message));
+        return;
+      }
+      dispatch(signOutSuccess());
+    } catch (error) {
+      dispatch(signOutFailure(error.message));
+      enqueueSnackbar(error.message, { variant: "error" });
+    }
   };
 
   const handleFileChange = async (e) => {
@@ -344,6 +362,7 @@ export default function ProfileForm() {
               Show listings
             </button>
             <button
+              type="button"
               className="cursor-pointer text-red-600 text-sm font-medium"
               onClick={handleSignOut}
             >
@@ -353,7 +372,11 @@ export default function ProfileForm() {
         </div>
       </form>
       {showDeleteModal && (
-        <DeleteModal handleCloseDeleteModal={handleCloseDeleteModal} handleDeleteUser={handleDeleteUser} loading={loading}/>
+        <DeleteModal
+          handleCloseDeleteModal={handleCloseDeleteModal}
+          handleDeleteUser={handleDeleteUser}
+          loading={loading}
+        />
       )}
     </>
   );
