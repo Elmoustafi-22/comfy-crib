@@ -7,7 +7,6 @@ import {
   updateUserStart,
   updateUserSuccess,
   updateUserFailure,
-  signOut,
   deleteUserSuccess,
   deleteUserFailure,
   signOutFailure,

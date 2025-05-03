@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv'
 import userRouter from './routes/user.route.js'
 import authRouter from './routes/auth.route.js';
+import listingRouter from './routes/listing.routes.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors'
 
@@ -23,6 +24,7 @@ app.listen(PORT, () => {
 
 app.use('/api/user', userRouter)
 app.use('/api/auth', authRouter)
+app.use('/api/listing', listingRouter);
 
 mongoose.connect(process.env.MONGO_URI, {
     dbName: 'comfy-crib-db',
