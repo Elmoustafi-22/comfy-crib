@@ -1,15 +1,11 @@
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { useNavigate } from 'react-router-dom'
-import {
-  signOut
-} from "../redux/userSlice";
 import ProfileForm from "../components/ProfileForm";
 
 export default function Profile() {
   
   const { currentUser } = useSelector((state) => state.user);
   
-  const dispatch = useDispatch();
   const navigate = useNavigate()
   console.log(currentUser)
 

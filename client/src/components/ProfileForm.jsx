@@ -2,7 +2,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useRef, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { useSnackbar } from "notistack";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   updateUserStart,
   updateUserSuccess,
@@ -339,9 +339,11 @@ export default function ProfileForm() {
             >
               {loading ? "LOADING" : "UPDATE"}
             </button>
-            <button className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer transition">
+            <Link 
+              to={'/create-listing'}
+              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer transition">
               CREATE LISTING
-            </button>
+            </Link>
           </div>
 
           <div className="mt-6">
