@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { supabase } from "../supabaseClient";
-import { fetchWithAuth } from "../../../api/utils/fetchWithAuth";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { signOut } from "../redux/userSlice";
 
 export default function CreateListing() {
   const { currentUser } = useSelector((state) => state.user);
@@ -13,7 +13,7 @@ export default function CreateListing() {
   const [loading, setLoading] = useState(null);
   const [imageUrls, setImageUrls] = useState([]);
   const [formData, setFormData] = useState({
-    imageUrls,
+    imageUrls: [],
     name: "",
     description: "",
     address: "",
@@ -34,12 +34,11 @@ export default function CreateListing() {
     if (files.length > 0 && files.length < 7) {
       setUploading(true);
       setUploadError(null);
+      setError(null)
       const promises = files.map((file) => storeImage(file));
 
       try {
         const urls = await Promise.all(promises);
-        if (formData.regularPrice < formData.discountPrice)
-          return setError("Discount price must be lower than regular price");
         setImageUrls(urls);
         setFormData((prevFormData) => ({
           ...prevFormData,
@@ -121,9 +120,10 @@ export default function CreateListing() {
       e.target.type === "text" ||
       e.target.type === "textarea"
     ) {
+      const value = e.target.type ==="number" ? Number(e.target.value) : e.target.value;
       setFormData({
         ...formData,
-        [e.target.id]: e.target.value,
+        [e.target.id]: value,
       });
     }
   };
@@ -131,8 +131,14 @@ export default function CreateListing() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      if (
+        formData.offer && 
+        Number(formData.regularPrice) < Number(formData.discountPrice)
+      ) {
+        setError("Discount price must be lower than regular price")
+      }
       setLoading(true);
-      const res = await fetchWithAuth(
+      const res = await fetch(
         "/api/listing/create",
         {
           method: "POST",
@@ -143,11 +149,13 @@ export default function CreateListing() {
             ...formData,
             userRef: currentUser?._id,
           }),
-        },
-        dispatch,
-        navigate
-      );
+        });
 
+        if (res.status === 401 || res.status === 403) {
+          dispatch(signOut())
+          navigate("/sign-in")
+          return null;
+        }
       const data = await res.json();
       setLoading(false);
 

@@ -14,6 +14,7 @@ import {
 } from "../redux/userSlice";
 import { fetchWithAuth } from "../../../api/utils/fetchWithAuth";
 import DeleteModal from "./DeleteModal";
+import Listing from "./Listing";
 
 export default function ProfileForm() {
   const fileRef = useRef(null);
@@ -24,6 +25,9 @@ export default function ProfileForm() {
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [listings, setListings] = useState([]);
+  const [showListing, setShowListing] = useState(false)
+  const [showListingError, setShowListingError] = useState(false);
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
@@ -36,7 +40,7 @@ export default function ProfileForm() {
       });
 
       const data = await res.json();
-      console.log(data)
+      console.log(data);
       if (data.success === false) {
         dispatch(signOutFailure(data.message));
         return;
@@ -209,6 +213,25 @@ export default function ProfileForm() {
     setShowDeleteModal(false);
   };
 
+  const handleShowListings = async () => {
+    try {
+      setShowListing(true)
+      const res = await fetch(`/api/user/listing/${currentUser?._id}`)
+      if (!res) return;
+
+      const data = await res.json()
+
+      if (data.success === false) {
+        setShowListingError(data.message)
+        return;
+      }
+      setListings(data)
+      console.log(listings)
+    } catch (error) {
+      setShowListingError(error.message);
+    }
+  };
+
   return (
     <>
       <form onSubmit={handleSubmit}>
@@ -339,9 +362,10 @@ export default function ProfileForm() {
             >
               {loading ? "LOADING" : "UPDATE"}
             </button>
-            <Link 
-              to={'/create-listing'}
-              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer transition">
+            <Link
+              to={"/create-listing"}
+              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer transition"
+            >
               CREATE LISTING
             </Link>
           </div>
@@ -359,9 +383,16 @@ export default function ProfileForm() {
               Delete Account
             </button>
 
-            <button className="cursor-pointer text-green-600 text-sm font-medium">
+            <button
+              type="button"
+              onClick={handleShowListings}
+              className="cursor-pointer text-green-600 text-sm font-medium"
+            >
               Show listings
             </button>
+            <p className="text-red-700 mt-5 text-sm">
+              {showListingError ? "Error showing listing" : ""}
+            </p>
             <button
               type="button"
               className="cursor-pointer text-red-600 text-sm font-medium"
@@ -372,10 +403,21 @@ export default function ProfileForm() {
           </div>
         </div>
       </form>
+      {showListing && (
+        <Listing
+          listings={listings}
+          handleShowListings={handleShowListings}
+          handleOpenDeleteModal={handleOpenDeleteModal}
+          showDeleteModal={showDeleteModal}
+          setShowDeleteModal={setShowDeleteModal}
+          handleCloseDeleteModal={handleCloseDeleteModal}
+          loading={loading}
+        />
+      )}
       {showDeleteModal && (
         <DeleteModal
           handleCloseDeleteModal={handleCloseDeleteModal}
-          handleDeleteUser={handleDeleteUser}
+          handleDelete={handleDeleteUser}
           loading={loading}
         />
       )}
