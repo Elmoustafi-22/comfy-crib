@@ -1,12 +1,9 @@
-import {useState} from "react";
+import { useState } from "react";
 import { useSnackbar } from "notistack";
+import { Link } from "react-router-dom";
 
-export default function Listing({
-  listings,
-  handleShowListings,
-  loading
-}) {
-  const [showModal, setShowModal] = useState(false)
+export default function Listing({ listings, handleShowListings, loading }) {
+  const [showModal, setShowModal] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   console.log(listings);
 
@@ -44,19 +41,24 @@ export default function Listing({
 
   const handleOpenModal = () => setShowModal(true);
 
-  const handleCloseModal = () => setShowModal(false)
+  const handleCloseModal = () => setShowModal(false);
 
   return (
     <div className="font-lato bg-white shadow-lg rounded-lg mb-6 p-6">
       {listings.map((listing) => (
         <div key={listing._id} className="flex flex-col gap-4 mb-4">
           <div className="flex justify-between items-center">
-            <div className="flex gap-2 items-center">
-              <img
-                src={listing.imageUrls[0]}
-                className="w-24 h-24 border-2 rounded-lg border-cyan-300"
-              />
-              <h1 className="font-semibold text-gray-700">{listing.name}</h1>
+            <div className="">
+              <Link
+                to={`/listing/${listing._id}`}
+                className="group flex gap-4 items-center font-semibold text-gray-700 hover:underline hover:text-violet-800 transition-all"
+              >
+                <img
+                  src={listing.imageUrls[0]}
+                  className="group-hover:border-violet-800 w-24 h-20 border-2 rounded-lg border-cyan-300"
+                />
+                <span className="transition-all">{listing.name}</span>
+              </Link>
             </div>
             <div className="flex flex-col gap-3 items-center justify-center">
               <button
